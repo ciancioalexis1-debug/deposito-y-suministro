@@ -1,0 +1,6 @@
+{
+  "name": "Gestión de Almacén Pro",
+  "description": "Sistema completo de gestión de almacén con control de stock, alertas de niveles críticos y trazabilidad de movimientos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

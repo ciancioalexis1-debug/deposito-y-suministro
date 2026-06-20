@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventario Pro - Sistema de Gestión</title>
+    <script>
+      /* High-level compatibility layer for restricted environments (iframes/sandboxes) */
+      (function() {
+        // 1. Shim window.fetch if it's read-only
+        try {
+          var originalFetch = window.fetch;
+          if (originalFetch && typeof originalFetch === 'function') {
+            var fetchValue = originalFetch;
+            Object.defineProperty(window, 'fetch', {
+              get: function() { return fetchValue; },
+              set: function(v) { fetchValue = v; },
+              configurable: true,
+              enumerable: true
+            });
+          }
+        } catch (e) {}
+
+        // 2. Fix "Illegal constructor" for Event and CustomEvent
+        function fixConstructor(name, nativeConstructor) {
+          try {
+            new window[name]('test');
+          } catch (e) {
+            if (nativeConstructor) {
+              var Shim = function(type, params) {
+                var evt = document.createEvent(name);
+                if (name === 'CustomEvent') {
+                  evt.initCustomEvent(type, !!(params && params.bubbles), !!(params && params.cancelable), params && params.detail);
+                } else {
+                  evt.initEvent(type, !!(params && params.bubbles), !!(params && params.cancelable));
+                }
+                return evt;
+              };
+              Shim.prototype = nativeConstructor.prototype;
+              window[name] = Shim;
+            }
+          }
+        }
+
+        if (typeof window !== 'undefined') {
+          fixConstructor('Event', window.Event);
+          fixConstructor('CustomEvent', window.CustomEvent);
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Producto",
+      "description": "Un artículo en el inventario.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "sku": { "type": "string" },
+        "categoryId": { "type": "string" },
+        "supplierId": { "type": "string" },
+        "locationId": { "type": "string" },
+        "exactLocation": { "type": "string" },
+        "unit": { "type": "string" },
+        "currentStock": { "type": "number" },
+        "minStock": { "type": "number" },
+        "maxStock": { "type": "number" },
+        "securityStock": { "type": "number" },
+        "lastUpdated": { "type": "string", "format": "date-time" },
+        "imageUrl": { "type": "string" }
+      },
+      "required": ["name", "sku", "currentStock", "minStock", "maxStock"]
+    },
+    "Location": {
+      "title": "Ubicación",
+      "description": "Una ubicación física en el almacén.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "Category": {
+      "title": "Categoría",
+      "description": "Una categoría de productos.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "Supplier": {
+      "title": "Proveedor",
+      "description": "Un proveedor de productos.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "contactName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    "Transaction": {
+      "title": "Transacción",
+      "description": "Un movimiento de stock (entrada/salida/ajuste).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "type": { "type": "string", "enum": ["IN", "OUT", "ADJUST"] },
+        "quantity": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["productId", "type", "quantity", "timestamp", "userId"]
+    },
+    "User": {
+      "title": "Usuario",
+      "description": "Metadatos del usuario de la aplicación.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "operator"] }
+      },
+      "required": ["email"]
+    }
+  },
+  "firestore": {
+    "products": {
+      "schema": "Product",
+      "description": "Colección de productos."
+    },
+    "categories": {
+      "schema": "Category",
+      "description": "Colección de categorías."
+    },
+    "suppliers": {
+      "schema": "Supplier",
+      "description": "Colección de proveedores."
+    },
+    "locations": {
+      "schema": "Location",
+      "description": "Colección de ubicaciones físicas."
+    },
+    "transactions": {
+      "schema": "Transaction",
+      "description": "Historial de movimientos de stock."
+    },
+    "userProfiles": {
+      "schema": "User",
+      "description": "Perfiles y roles de los usuarios."
+    }
+  }
+}

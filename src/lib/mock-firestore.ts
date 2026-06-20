@@ -165,6 +165,9 @@ export class MockQuerySnapshot {
   constructor(docs: MockDocumentSnapshot[]) {
     this.docs = docs;
   }
+  forEach(callback: (doc: MockDocumentSnapshot, index: number) => void) {
+    this.docs.forEach(callback);
+  }
 }
 
 export class MockQuery {

@@ -165,7 +165,10 @@ export default function Dashboard() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-serif italic text-white truncate group-hover:text-amber-500 transition-colors">{product?.name || 'Desconocido'}</p>
-                    <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold mt-0.5">{t.type === 'IN' ? 'Entrada' : 'Salida'} • {format(t.timestamp?.toDate() || new Date(), "d MMM", { locale: es })}</p>
+                    <p className="text-[10px] text-white/30 uppercase tracking-widest font-bold mt-0.5">
+                      {t.type === 'IN' ? 'Entrada' : 'Salida'} • {format(t.timestamp?.toDate() || new Date(), "d MMM", { locale: es })}
+                      {t.recipient && ` • Recibe: ${t.recipient}`}
+                    </p>
                   </div>
                   <div className={`text-sm font-mono font-bold ${t.type === 'IN' ? 'text-emerald-500' : 'text-red-500'}`}>
                     {t.type === 'IN' ? '+' : '-'}{t.quantity}

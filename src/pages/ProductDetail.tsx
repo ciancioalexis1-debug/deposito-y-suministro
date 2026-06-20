@@ -42,6 +42,7 @@ export default function ProductDetail() {
   const [movementType, setMovementType] = useState<TransactionType>('IN');
   const [movementQuantity, setMovementQuantity] = useState(1);
   const [movementNotes, setMovementNotes] = useState('');
+  const [recipient, setRecipient] = useState('');
 
   // Edit State
   const [editFormData, setEditFormData] = useState({
@@ -140,18 +141,25 @@ export default function ProductDetail() {
         lastUpdated: serverTimestamp()
       });
 
-      await addDoc(collection(db, 'transactions'), {
+      const txData: any = {
         productId: id,
         type: movementType,
         quantity: movementQuantity,
         timestamp: serverTimestamp(),
         userId: user?.uid || 'anonymous',
         notes: movementNotes
-      });
+      };
+
+      if (movementType === 'OUT') {
+        txData.recipient = recipient.trim();
+      }
+
+      await addDoc(collection(db, 'transactions'), txData);
 
       setIsMovementModalOpen(false);
       setMovementQuantity(1);
       setMovementNotes('');
+      setRecipient('');
     } catch (err) {
       handleFirestoreError(err, OperationType.WRITE, 'transactions');
     }
@@ -562,6 +570,22 @@ export default function ProductDetail() {
                     className="w-full px-4 py-8 bg-black/40 border border-white/5 rounded-2xl text-white text-5xl font-mono font-bold text-center focus:outline-none focus:border-amber-500/40"
                   />
                 </div>
+
+                {movementType === 'OUT' && (
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] ml-1">
+                      Entregado A (Destinatario) <span className="text-amber-500">*</span>
+                    </label>
+                    <input
+                      required={movementType === 'OUT'}
+                      type="text"
+                      placeholder="Nombre del personal receptor, servicio o sector"
+                      value={recipient}
+                      onChange={(e) => setRecipient(e.target.value)}
+                      className="w-full px-4 py-4 bg-black/40 border border-white/5 rounded-xl text-white placeholder:text-white/20 text-sm focus:outline-none focus:border-amber-500/20 transition-all font-medium"
+                    />
+                  </div>
+                )}
 
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] ml-1">Notas / Justificación</label>

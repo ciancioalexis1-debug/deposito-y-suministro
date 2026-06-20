@@ -92,18 +92,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const uSnap = await getDocs(collection(db, 'userProfiles'));
       let foundProfile: (UserProfile & { password?: string }) | null = null;
 
-      uSnap.forEach((docSnap) => {
-        const data = docSnap.data();
-        const dispName = data.displayName || '';
-        const email = data.email || '';
-        if (
-          email.toLowerCase() === emailLower ||
-          dispName.toLowerCase() === emailLower ||
-          docSnap.id.toLowerCase() === emailLower
-        ) {
-          foundProfile = { id: docSnap.id, email, displayName: dispName, role: data.role, password: data.password } as any;
+      // Safe validation of users from 'usuarios' array in localStorage as requested
+      let localUsuarios: any[] = [];
+      try {
+        const storedUsuarios = localStorage.getItem('usuarios');
+        if (storedUsuarios) {
+          const parsed = JSON.parse(storedUsuarios);
+          if (Array.isArray(parsed)) {
+            localUsuarios = parsed;
+          }
+        }
+      } catch (err) {
+        console.warn("No se pudo parsear 'usuarios' de localStorage, se usará vacío:", err);
+        localUsuarios = [];
+      }
+
+      localUsuarios.forEach((userObj: any) => {
+        if (userObj && typeof userObj === 'object') {
+          const email = userObj.email || '';
+          const dispName = userObj.displayName || '';
+          const uid = userObj.id || userObj.uid || '';
+          if (
+            email.toLowerCase() === emailLower ||
+            dispName.toLowerCase() === emailLower ||
+            uid.toLowerCase() === emailLower
+          ) {
+            foundProfile = {
+              id: uid,
+              email: email,
+              displayName: dispName,
+              role: userObj.role || 'operator',
+              password: userObj.password || '',
+            };
+          }
         }
       });
+
+      if (!foundProfile) {
+        uSnap.forEach((docSnap) => {
+          const data = docSnap.data();
+          const dispName = data.displayName || '';
+          const email = data.email || '';
+          if (
+            email.toLowerCase() === emailLower ||
+            dispName.toLowerCase() === emailLower ||
+            docSnap.id.toLowerCase() === emailLower
+          ) {
+            foundProfile = { id: docSnap.id, email, displayName: dispName, role: data.role, password: data.password } as any;
+          }
+        });
+      }
 
       if (!foundProfile) {
         throw new Error('Colaborador no registrado o nombre de usuario incorrecto.');

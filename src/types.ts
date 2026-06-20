@@ -50,6 +50,7 @@ export interface Transaction {
   timestamp: any; // Timestamp
   userId: string;
   notes: string;
+  recipient?: string;
 }
 
 export interface UserProfile {

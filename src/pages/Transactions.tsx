@@ -206,8 +206,13 @@ export default function Transactions() {
                   </div>
                 </div>
 
-                <div className="col-span-3 text-right">
-                  <p className="text-xs text-white/40 italic font-medium leading-relaxed font-serif truncate hover:whitespace-normal transition-all">{t.notes || 'Sin especificaciones.'}</p>
+                <div className="col-span-3 text-right font-medium">
+                  <p className="text-xs text-white/40 italic leading-relaxed font-serif truncate hover:whitespace-normal transition-all">{t.notes || 'Sin especificaciones.'}</p>
+                  {t.recipient && (
+                    <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest mt-1">
+                      Destinatario: {t.recipient}
+                    </p>
+                  )}
                   <p className="text-[9px] font-bold text-white/10 uppercase tracking-[0.3em] mt-1">ID:{t.id.slice(-6).toUpperCase()}</p>
                 </div>
               </div>

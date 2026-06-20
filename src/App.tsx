@@ -1,5 +1,5 @@
 import React, { useState, ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, Link, useLocation } from 'react-router-dom';
 import { signInWithPopup, signInWithEmailAndPassword, googleProvider, auth } from './lib/firebase';
 import { AuthProvider, useAuth } from './lib/auth';
 import { 
@@ -337,7 +337,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <HashRouter>
       <AuthProvider>
         <AuthWrapper>
           <Layout>
@@ -355,6 +355,6 @@ export default function App() {
           </Layout>
         </AuthWrapper>
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

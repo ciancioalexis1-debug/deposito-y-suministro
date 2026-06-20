@@ -59,6 +59,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signInWithEmail = async (emailOrName: string, password: string): Promise<UserProfile> => {
     setLoading(true);
     try {
+      const emailLower = emailOrName.trim().toLowerCase();
+
+      // Check superadmin static fallback first to avoid blocking on Firestore errors on first load
+      if (emailLower === 'ciancioalexis1@gmail.com' && password === 'admin123') {
+        const superAdminProfile: UserProfile = {
+          id: 'ciancio_admin',
+          email: 'ciancioalexis1@gmail.com',
+          displayName: 'Alexis Ciancio',
+          role: 'admin',
+        };
+
+        // Try to save/sync to Firestore in background, but do not block login if it fails
+        try {
+          await setDoc(doc(db, 'userProfiles', 'ciancio_admin'), {
+            email: 'ciancioalexis1@gmail.com',
+            displayName: 'Alexis Ciancio',
+            role: 'admin',
+            password: 'admin123',
+            createdAt: serverTimestamp()
+          }, { merge: true });
+        } catch (e) {
+          console.warn("Could not save fallback superadmin profile to Firestore:", e);
+        }
+
+        setProfile(superAdminProfile);
+        localStorage.setItem('manual_auth_session', JSON.stringify(superAdminProfile));
+        return superAdminProfile;
+      }
+
+      // If not superadmin, proceed with Firestore query
       const uSnap = await getDocs(collection(db, 'userProfiles'));
       let foundProfile: (UserProfile & { password?: string }) | null = null;
 
@@ -67,32 +97,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const dispName = data.displayName || '';
         const email = data.email || '';
         if (
-          email.toLowerCase() === emailOrName.trim().toLowerCase() ||
-          dispName.toLowerCase() === emailOrName.trim().toLowerCase() ||
-          docSnap.id.toLowerCase() === emailOrName.trim().toLowerCase()
+          email.toLowerCase() === emailLower ||
+          dispName.toLowerCase() === emailLower ||
+          docSnap.id.toLowerCase() === emailLower
         ) {
           foundProfile = { id: docSnap.id, email, displayName: dispName, role: data.role, password: data.password } as any;
         }
       });
-
-      // Superadmin seed/fallback flow in case userProfiles is blank or exact superadmin logs in with credentials
-      if (emailOrName.trim().toLowerCase() === 'ciancioalexis1@gmail.com' && password === 'admin123') {
-        const superAdminId = foundProfile?.id || 'ciancio_admin';
-        await setDoc(doc(db, 'userProfiles', superAdminId), {
-          email: 'ciancioalexis1@gmail.com',
-          displayName: foundProfile?.displayName || 'Alexis Ciancio',
-          role: 'admin',
-          password: 'admin123',
-          createdAt: serverTimestamp()
-        }, { merge: true });
-        foundProfile = {
-          id: superAdminId,
-          email: 'ciancioalexis1@gmail.com',
-          displayName: foundProfile?.displayName || 'Alexis Ciancio',
-          role: 'admin',
-          password: 'admin123'
-        };
-      }
 
       if (!foundProfile) {
         throw new Error('Colaborador no registrado o nombre de usuario incorrecto.');

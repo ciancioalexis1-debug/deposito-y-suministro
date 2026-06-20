@@ -9,7 +9,8 @@ import {
   Key, 
   X,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  Pencil
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserProfile } from '../types';
@@ -23,6 +24,8 @@ export default function Users() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     email: '',
@@ -65,41 +68,76 @@ export default function Users() {
     setMessage(null);
 
     try {
-      // Check if email/displayName is already occupied
-      const duplicateExists = users.some(u => 
-        (u.email && u.email.toLowerCase() === formData.email.trim().toLowerCase()) ||
-        (u.displayName && u.displayName.toLowerCase() === formData.displayName.trim().toLowerCase())
-      );
+      const emailTrimmed = formData.email.trim();
+      const displayNameTrimmed = formData.displayName.trim();
 
-      if (duplicateExists) {
-        throw new Error('Ya existe un colaborador con este mismo nombre o dirección de correo electrónico.');
+      // Check duplicate email (ignoring self if editing)
+      const emailDuplicate = users.find(u => 
+        u.id !== editingUserId && u.email && u.email.trim().toLowerCase() === emailTrimmed.toLowerCase()
+      );
+      if (emailDuplicate) {
+        throw new Error(`El correo electrónico '${emailTrimmed}' ya está registrado bajo el colaborador '${emailDuplicate.displayName}'.`);
       }
 
-      // Generate manual safe user ID
-      const customUid = 'user_' + Math.random().toString(36).substring(2, 11);
-      const profileRef = doc(db, 'userProfiles', customUid);
+      // Check duplicate display name (ignoring self if editing)
+      const nameDuplicate = users.find(u => 
+        u.id !== editingUserId && u.displayName && u.displayName.trim().toLowerCase() === displayNameTrimmed.toLowerCase()
+      );
+      if (nameDuplicate) {
+        throw new Error(`El nombre de colaborador '${displayNameTrimmed}' ya está en uso. Use un nombre único para permitir su ingreso.`);
+      }
 
-      await setDoc(profileRef, {
-        email: formData.email.trim(),
-        displayName: formData.displayName.trim(),
+      // Generate manual safe user ID or reuse existing
+      const targetUid = editingUserId || ('user_' + Math.random().toString(36).substring(2, 11));
+      const profileRef = doc(db, 'userProfiles', targetUid);
+
+      const userDocData: any = {
+        email: emailTrimmed,
+        displayName: displayNameTrimmed,
         role: formData.role,
         password: formData.password.trim(),
-        createdAt: serverTimestamp()
-      });
+      };
+
+      if (!editingUserId) {
+        userDocData.createdAt = serverTimestamp();
+      }
+
+      await setDoc(profileRef, userDocData, { merge: true });
 
       setMessage({ 
         type: 'success', 
-        text: 'Usuario colaborador registrado y vinculado exitosamente.' 
+        text: editingUserId 
+          ? 'Los datos del colaborador fueron actualizados con éxito.' 
+          : 'Usuario colaborador registrado y vinculado exitosamente.' 
       });
+      
       setFormData({ email: '', password: '', displayName: '', role: 'operator' });
+      setEditingUserId(null);
       setIsModalOpen(false);
       fetchUsers();
     } catch (err: any) {
-      console.error("Error creating user:", err);
-      setMessage({ type: 'error', text: err.message || 'Error al crear usuario' });
+      console.error("Error creating/editing user:", err);
+      setMessage({ type: 'error', text: err.message || 'Error al procesar usuario' });
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleEditClick = (u: UserProfile) => {
+    setEditingUserId(u.id);
+    setFormData({
+      email: u.email || '',
+      displayName: u.displayName || '',
+      password: (u as any).password || '',
+      role: u.role || 'operator'
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingUserId(null);
+    setFormData({ email: '', password: '', displayName: '', role: 'operator' });
   };
 
   const handleDeleteUser = async (uid: string) => {
@@ -138,7 +176,11 @@ export default function Users() {
           <p className="text-white/40 text-xs uppercase tracking-[0.2em] mt-1 font-medium">Control de Permisos y Usuarios del Sistema</p>
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setEditingUserId(null);
+            setFormData({ email: '', password: '', displayName: '', role: 'operator' });
+            setIsModalOpen(true);
+          }}
           className="flex items-center justify-center gap-2 bg-amber-600 text-black font-bold py-3 px-8 rounded-xl hover:bg-amber-500 transition-all shadow-lg active:scale-95"
         >
           <UserPlus size={18} />
@@ -175,7 +217,13 @@ export default function Users() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="bg-[#111111] border border-white/5 p-8 rounded-xl hover:border-white/10 transition-all group relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-2">
+                  <button
+                    onClick={() => handleEditClick(u)}
+                    className="p-2 text-white/20 hover:text-amber-500 transition-colors"
+                  >
+                    <Pencil size={15} />
+                  </button>
                   {u.email !== 'ciancioalexis1@gmail.com' && (
                     <button
                       onClick={() => handleDeleteUser(u.id)}
@@ -233,7 +281,7 @@ export default function Users() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setIsModalOpen(false)}
+              onClick={handleCloseModal}
               className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
             <motion.div
@@ -243,9 +291,11 @@ export default function Users() {
               className="relative bg-[#111111] border border-white/10 w-full max-w-md rounded-xl shadow-2xl overflow-hidden"
             >
               <div className="flex items-center justify-between p-6 border-b border-white/5 bg-[#1a1a1a]">
-                <h2 className="text-2xl font-serif italic text-white leading-none">Alta de Usuario</h2>
+                <h2 className="text-2xl font-serif italic text-white leading-none">
+                  {editingUserId ? 'Editar Colaborador' : 'Alta de Usuario'}
+                </h2>
                 <button 
-                    onClick={() => setIsModalOpen(false)} 
+                    onClick={handleCloseModal} 
                     className="p-2 text-white/20 hover:text-white transition-colors"
                 >
                   <X size={24} />
@@ -307,7 +357,7 @@ export default function Users() {
                 <div className="pt-6 flex gap-4">
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={handleCloseModal}
                     className="flex-1 py-4 font-bold text-white/30 hover:text-white transition-colors uppercase tracking-widest text-[10px]"
                   >
                     Cancelar
@@ -317,7 +367,7 @@ export default function Users() {
                     disabled={actionLoading}
                     className="flex-1 bg-amber-600 text-black font-black py-4 rounded-xl hover:bg-amber-500 transition-all shadow-xl shadow-amber-900/20 uppercase tracking-widest text-[10px] disabled:opacity-50"
                   >
-                    {actionLoading ? 'Procesando...' : 'Crear Acceso'}
+                    {actionLoading ? 'Procesando...' : (editingUserId ? 'Guardar Cambios' : 'Crear Acceso')}
                   </button>
                 </div>
               </form>

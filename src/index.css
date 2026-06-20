@@ -12,3 +12,14 @@
 body {
   @apply bg-[#0a0a0a] text-[#e0e0e0] antialiased min-h-screen font-sans;
 }
+
+/* Ensure all select and option fields are clearly visible with high contrast of dark theme */
+select, option {
+  background-color: #141414 !important;
+  color: #ffffff !important;
+}
+
+select {
+  color-scheme: dark;
+}
+

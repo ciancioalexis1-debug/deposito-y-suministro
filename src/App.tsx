@@ -12,7 +12,8 @@ import {
   Menu, 
   X, 
   LayoutDashboard,
-  Users as UsersIcon
+  Users as UsersIcon,
+  RotateCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -154,7 +155,15 @@ const AuthWrapper = ({ children }: { children: ReactNode }) => {
 
 const Layout = ({ children }: { children: ReactNode }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
   const { user, profile, isAdmin, signOut } = useAuth();
+
+  const handleUpdateApp = () => {
+    setIsReloading(true);
+    setTimeout(() => {
+      window.location.reload();
+    }, 600);
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex font-sans text-white selection:bg-amber-600 selection:text-black">
@@ -201,13 +210,23 @@ const Layout = ({ children }: { children: ReactNode }) => {
               </div>
             </div>
           </div>
-          <button 
-            onClick={() => signOut()}
-            className="flex items-center gap-3 w-full px-4 py-2 text-white/40 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest"
-          >
-            <LogOut size={16} />
-            Cerrar Sesión
-          </button>
+          <div className="flex gap-2 items-center">
+            <button 
+              onClick={() => signOut()}
+              className="flex items-center gap-3 w-full px-4 py-2 text-white/40 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest truncate"
+            >
+              <LogOut size={16} />
+              Cerrar Sesión
+            </button>
+            <button
+              onClick={handleUpdateApp}
+              disabled={isReloading}
+              title="Actualizar Aplicación"
+              className="p-2 text-white/40 hover:text-amber-500 transition-all bg-white/5 rounded-lg hover:bg-white/10 active:scale-95 shrink-0 flex items-center justify-center disabled:opacity-50"
+            >
+              <RotateCw size={16} className={isReloading ? 'animate-spin text-amber-500' : ''} />
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -219,12 +238,22 @@ const Layout = ({ children }: { children: ReactNode }) => {
            </div>
            <span className="font-serif font-bold italic tracking-tight text-white leading-none">Almacén Pro</span>
         </div>
-        <button 
-          onClick={() => setIsSidebarOpen(true)}
-          className="p-2 text-white"
-        >
-          <Menu size={24} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleUpdateApp}
+            disabled={isReloading}
+            title="Actualizar Aplicación"
+            className="p-2.5 text-white/60 hover:text-amber-500 transition-all bg-white/5 rounded-xl flex items-center justify-center active:scale-90 disabled:opacity-50"
+          >
+            <RotateCw size={18} className={isReloading ? 'animate-spin text-amber-500' : ''} />
+          </button>
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 text-white"
+          >
+            <Menu size={24} />
+          </button>
+        </div>
       </div>
 
       {/* Sidebar Mobile Overlay */}
